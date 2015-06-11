@@ -4,6 +4,8 @@
 from modules.ackley import f as ackley_f
 from math import pi
 from random import uniform as randuniform
+from modules.PSO_inertia import PSO_inertia
+from random import gauss
 
 
 class Particle(object):
@@ -98,13 +100,17 @@ class Particle(object):
     def c3(self):
         return self._c3
 
-    def get_fitness(self):
+    def get_fitness(self, position=None, dimension=None):
+        if dimension is None:
+            dimension = self.dimension
+        if position is None:
+            position = self.position
         ackley_result = ackley_f(
             c1=self.c1,
             c2=self.c2,
             c3=self.c3,
-            dimension=self.dimension,
-            position=self.position
+            dimension=dimension,
+            position=position
         )
         fitness = 1.0 / (1.0 + ackley_result)
         return fitness
@@ -114,15 +120,55 @@ class Particle(object):
         self._c2 = 0.2
         self._c3 = 2.0 * pi
         self._dimension = 30
-        self._min_velocity = -2.0
-        self._max_velocity = 2.0
-        self._max_inertia = 0.7
-        self._min_inertia = 0.4
-        self._cognitive_scaling = 2
-        self._social_scaling = 2
-        self._position = []
-        self._velocity = []
+        self._min_velocity = -1.0
+        self._max_velocity = 1.0
+        self._max_inertia = 3.0
+        self._min_inertia = 0.1
+        self._cognitive_scaling = 1.5
+        self._social_scaling = 1.0
+        self._position = list()
+        self._velocity = list()
         for i in range(0, self.dimension):
             self._position.append(randuniform(-15.0, 15.0))
         for i in range(0, self.dimension):
             self._velocity.append(randuniform(self.min_velocity, self.max_velocity))
+        self._best_fitness = self.get_fitness()
+        self._best_position = self.position
+
+    def _update_position(self, current_iteration, max_iteration, global_best_position, current_sd):
+        inertia = PSO_inertia(
+            current_iteration=current_iteration,
+            max_iteration=max_iteration,
+            min_inertia=self.min_inertia,
+            max_inertia=self.max_inertia
+        )
+        new_velocity = list()
+        pso_position = list()
+        aco_position = list()
+        for (x, v, b, g) in zip(self.position, self.velocity, self.best_position, global_best_position):
+            pso_velocity = inertia * float(v)
+            pso_velocity += self.cognitive_scaling * gauss(0, 1) * (b - x)
+            pso_velocity += self.social_scaling * gauss(0, 1) * (g - x)
+            if pso_velocity > self.max_velocity:
+                pso_velocity = self.max_velocity
+            if pso_velocity < self.min_velocity:
+                pso_velocity = self.min_velocity
+            new_velocity.append(pso_velocity)
+            position = x + pso_velocity
+            pso_position.append(position)
+            position = gauss(g, current_sd)
+            aco_position.append(position)
+        self._velocity = new_velocity
+        pso_fitness = self.get_fitness(position=pso_position)
+        aco_fitness = self.get_fitness(position=aco_position)
+        if pso_fitness >= aco_fitness:
+            self._position = pso_position
+            if pso_fitness > self.best_fitness:
+                self._best_fitness = pso_fitness
+                self._best_position = self.position
+        else:
+            self._position = aco_position
+            if aco_fitness > self.best_fitness:
+                self._best_fitness = aco_fitness
+                self._best_position = self.position
+        return self

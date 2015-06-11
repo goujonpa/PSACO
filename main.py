@@ -6,4 +6,9 @@ from classes.Particle import Particle
 
 
 def run():
-    pass
+    population = Population()
+    population._psaco_initialisation()
+    best = population._run_PSACO()
+    print('{} : {}'.format(best.position, best.get_fitness()))
+
+run()
