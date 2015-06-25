@@ -8,7 +8,9 @@ from classes.Particle import Particle
 def run():
     population = Population()
     population._psaco_initialisation()
-    best = population._run_PSACO()
-    print('{} : {}'.format(best.position, best.get_fitness()))
+    result = population._run_PSACO()
+    best = result[0]
+    iteration = result[1]
+    print('{} : {} at {}'.format(best.position, best.get_fitness(), iteration))
 
 run()

@@ -120,11 +120,11 @@ class Particle(object):
         self._c2 = 0.2
         self._c3 = 2.0 * pi
         self._dimension = 30
-        self._min_velocity = -1.0
-        self._max_velocity = 1.0
-        self._max_inertia = 3.0
-        self._min_inertia = 0.1
-        self._cognitive_scaling = 1.5
+        self._min_velocity = -2.0
+        self._max_velocity = 2.0
+        self._max_inertia = 2.0
+        self._min_inertia = 0.01
+        self._cognitive_scaling = 0.5
         self._social_scaling = 1.0
         self._position = list()
         self._velocity = list()

@@ -72,12 +72,12 @@ class Population(object):
         return self._sd_dec
 
     def _psaco_initialisation(self):
-        self._size = 50
+        self._size = 100
         self._max_iter = 1000
-        self._max_fitness = 0.9
+        self._max_fitness = 0.999999
         self._current_sd = 2.0
-        self._min_sd = 0.001
-        self._sd_dec = 0.90
+        self._min_sd = 0.0001
+        self._sd_dec = 0.1
         self._population = list()
         self._best_global_fit = 0.0
         for i in range(0, self.size):
@@ -92,23 +92,22 @@ class Population(object):
         t = 0
         self._measure_iter = []
         self._measure_best_fitness = []
-        while t < self.max_iter:
+        while t < self.max_iter and self.best_global_fit < self.max_fitness:
             print('Iteration : {} / {}'.format(t, self.max_iter))
             self._measure_iter.append(t)
-            self._measure_best_fitness.append(self._best_global_fit)
+            self._measure_best_fitness.append(self.best_global_fit)
             t += 1
-            new_population = list()
             for (particle, fitness) in self.population:
-                new_particle = particle._update_position(
+                particle = particle._update_position(
                     current_iteration=t,
                     max_iteration=self.max_iter,
                     global_best_position=self.global_best.position,
                     current_sd=self.current_sd
                 )
-                if new_particle.get_fitness() > self.best_global_fit:
-                    self._global_best = new_particle
-                    self._best_global_fit = new_particle.get_fitness()
-                new_population.append((new_particle, new_particle.get_fitness()))
+                fitness = particle.get_fitness()
+                if fitness > self.best_global_fit:
+                    self._global_best = particle
+                    self._best_global_fit = fitness
                 self._current_sd *= self.sd_dec
                 if self.current_sd < self.min_sd:
                     self._current_sd = self.min_sd
@@ -117,4 +116,4 @@ class Population(object):
         measures = dict()
         measures['max_fit'] = self._measure_best_fitness
         save_figure(self._measure_iter, measures, 'simu')
-        return self._global_best
+        return (self._global_best, t)
